@@ -41,11 +41,11 @@ width = 216
 height = 216
 grid_width = width // 5
 radius = 15 # 棋子半径
-
+side_width=100
 font_name = 'SimHei'
 
 
-screen = pygame.display.set_mode((width, height))
+screen = pygame.display.set_mode((width+side_width, height))
 pygame.display.set_caption("一划三")
 
 
@@ -55,13 +55,18 @@ class game13():
     down_ident = 0 # 棋子的双方 0 白棋，1 黑棋
     is_down = 0 # 是否被点击选中，1是，0否
     down_pos = (0,0) # 别选中的位置
-    down_color = None # 被选中的颜色
+    down_color = black # 被选中的颜色
     is_draction = 0 # 判断走子发方向，方便判断结果 0 横向 1 竖向
 
     def __init__(self):
         pass
 
     def create_qizi(self):
+        self.down_ident=0
+        self.is_down=0
+        self.down_pos=(0,0)
+        self.down_color=black
+        self.is_draction=0
         # 生成棋盘列表 定义开始棋子位子
         #color_metrix = [[None] * 4 for i in range(4)]
         color_metrix = []
@@ -106,6 +111,8 @@ class game13():
                 self.is_down=0
                 self.down_pos=(0,0)
                 color_metrix[pos[1]][pos[0]] = self.down_color
+                self.down_color = black if self.down_color == white else white
+                return color_metrix
 
         color_metrix = self.transform_qizi(pos,color_metrix)
 
@@ -123,7 +130,7 @@ class game13():
         # 判断竖直方向
         if direction == 1:
             # 只判断横向就行了
-            # 如果有3个同颜色的相连，另一个在边，就要给换颜色
+            # 如果有3个同颜色的相连并且还是都有棋子的情况下，另一个在边，就要给换颜色
             # 判断3划1
             right = pos[0]+1
             while right < 4 and color_metrix[pos[1]][right] is not None and color_metrix[pos[1]][right] == self.down_color:
@@ -153,7 +160,7 @@ class game13():
             if color_num1 == 3 or color_num2 == 3 or color_num3 == 3:
                 # 换颜色
                 for i in range(4):
-                    if color_metrix[pos[1]][i] != self.down_color:
+                    if color_metrix[pos[1]][i] is not None and color_metrix[pos[1]][i] != self.down_color:
                         color_metrix[pos[1]][i] = self.down_color
                         pos_son = (i,pos[1])
                         color_metrix = self.transform_qizi(pos_son,color_metrix,2)
@@ -190,7 +197,7 @@ class game13():
             if color_num1 == 3 or color_num2 == 3 or color_num3 == 3:
                 # 换颜色
                 for i in range(4):
-                    if color_metrix[i][pos[0]] != self.down_color:
+                    if color_metrix[i][pos[0]] is not None and color_metrix[i][pos[0]] != self.down_color:
                         color_metrix[i][pos[0]] = self.down_color
                         pos_son = (pos[0],i)
                         color_metrix = self.transform_qizi(pos_son,color_metrix,1)
@@ -201,9 +208,13 @@ class game13():
     def get_ident(self):
         return self.down_ident
 
+    def get_color(self):
+        return self.down_color
+
     def set_down_color(self,color):
         self.down_color = color
         return self.down_color
+
 
 
 
@@ -232,7 +243,7 @@ def draw_background(surf):
         pygame.draw.line(surf,black,line[0],line[1],1)
 
     # 画出中间的网格线
-    for i in range(17):
+    for i in range(3):
         # 画竖线
         pygame.draw.line(surf,black,(grid_width*(2+i),grid_width),(grid_width*(2+i),height-grid_width))
         # 画横线
@@ -262,30 +273,30 @@ def draw_text(surf,text,size,pos,color=white):
 # 判断胜负
 # 当棋盘里所有的棋子都是同一种颜色就表示已经结束了
 def game_is_over(color_metrix):
-    a = 0
+    b = 0
     w = 0
     for i in range(4):
         for j in range(4):
             if color_metrix[i][j] is not None and color_metrix[i][j] == black:
-                a += 1
+                b += 1
             if color_metrix[i][j] is not None and color_metrix[i][j] == white:
                 w += 1
 
-    if a == 12 :
-        return 1
-    elif w == 12:
+    if b == 12 :
         return 2
+    elif w == 12:
+        return 1
     return 0
 
 # 显示输赢
 def show_go_screen(surf,winner=None):
     note_height = 10
     if winner is not None:
-        draw_text(surf,' {0} 赢 了！'.format('白棋' if winner == 0 else '黑棋'),64,(width//2,note_height),red)
+        draw_text(surf,' {0} 赢 了！'.format('白棋' if winner == 0 else '黑棋'),14,(width//2,note_height),red)
     else:
         screen.blit(background_img,(0,0))
-    draw_text(surf,"一划三",64,(width//2,note_height+height//4),black)
-    draw_text(surf,"请按任意键开始",22,(width//2,note_height+height//2),blue)
+    draw_text(surf,"一划三",14,(width//2,note_height+height//4),black)
+    draw_text(surf,"请按任意键开始",12,(width//2,note_height+height//2),blue)
     pygame.display.flip()
     waiting = True
 
@@ -322,8 +333,10 @@ winner = None
 clock = pygame.time.Clock()
 fps=30
 ident = 0
+win = 0
 gm13 = game13()
 
+color = (white,black)
 while running:
     if game_over:
         # 显示输赢信息
@@ -349,5 +362,9 @@ while running:
     if win > 0:
         winner=win-1
         game_over = True
+    if win == 0:
+        draw_text(screen,"轮到{0} ".format('白棋' if ident == 0 else '黑棋'),24,(width+50,height//2),color[ident])
+    else:
+        draw_text(screen,"结束了",24,(width+50,height//2),color[ident])
     # 刷新屏幕
     pygame.display.flip()
