@@ -40,6 +40,7 @@ side_width1 = 200
 black=(0,0,0)
 red=(251,4,4)
 blue=(0, 0, 255)
+white=(255, 255, 255)
 
 cheese_color_red = (251,4,5) # 红棋
 cheese_color_blue = (7,79,247) # 当前选中的棋子颜色
@@ -692,7 +693,10 @@ class cheese():
         return self.note
     # 获取行棋记录 后面10条
     def get_cheese_log(self):
-        return self.cheeses_log_note[-10:]
+        if len(self.cheeses_log_note) <= 10:
+            return self.cheeses_log_note
+        else:
+            return self.cheeses_log_note[-10:]
 
     # 上一步
     def back_down(self):
@@ -746,7 +750,7 @@ def draw_background(surf):
         pygame.draw.line(surf,black,(grid_width*(2+i),grid_width*6),(grid_width*(2+i),height-grid_width))
 
     # 间隔线
-    pygame.draw.line(surf,black,(grid_width*10+side_width,grid_width),(grid_width*10+side_width,height-grid_width))
+    pygame.draw.line(surf,black,(grid_width*10+side_width,0),(grid_width*10+side_width,height))
 
     for i in range(8):
         # 画横线
@@ -809,6 +813,7 @@ cheese = cheese()
 curr_cheess_matrix = None
 screen_cheeses_matrix = cheese.draw_baiqi(curr_cheess_matrix)
 can_matrix = []
+cheese_log = [None]*10
 
 note=""
 # cheese.power_down((7,4),1)
@@ -832,6 +837,7 @@ while running:
                 ident = cheese.get_ident()
                 note = cheese.get_note()
                 cheese_log = cheese.get_cheese_log()
+                cheese_log.reverse()
 
 
 
@@ -857,10 +863,11 @@ while running:
         draw_txt(screen,note,(width/2-40,height/2-40),66,0,red)
 
     # 显示记录
-    cheese_log.reverse()
-    for n in range(10):
+    lenstr = len(cheese_log)
+    #
+    for n in range(lenstr):
         if cheese_log[n]:
-            draw_txt(screen,cheese_log[n],(grid_width*11+side_width,grid_width*n+30),40,0,white)
+            draw_txt(screen,cheese_log[n],(grid_width*11+side_width,(grid_width-30)*n+30),25,0,white)
 
 
     # 刷新屏幕
